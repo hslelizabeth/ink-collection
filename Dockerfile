@@ -8,6 +8,9 @@ RUN npm run build
 
 # ---------- 后端构建 ----------
 FROM golang:1.26-alpine AS gobuild
+# Go 模块代理：默认官方源，网络受限环境可 --build-arg GOPROXY=https://goproxy.cn,direct
+ARG GOPROXY=https://proxy.golang.org,direct
+ENV GOPROXY=${GOPROXY}
 WORKDIR /src
 # 依赖缓存层
 COPY server/go.mod server/go.sum ./
