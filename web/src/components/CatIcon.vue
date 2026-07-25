@@ -1,5 +1,5 @@
 <script setup>
-// 品类图标：pen / ink / inkstone / inkstick / generic / home / image
+// 品类图标：pen / ink / inkstone / inkstick / generic / home / image / gear
 const props = defineProps({
   name: { type: String, default: 'generic' }
 })
@@ -36,6 +36,10 @@ const paths = {
     { tag: 'rect', x: 3, y: 5, width: 18, height: 14, rx: 2 },
     { tag: 'circle', cx: 9, cy: 10, r: 1.6 },
     { tag: 'path', d: 'M5 17l4-4 3 3 3-3 4 4' }
+  ],
+  gear: [
+    { tag: 'circle', cx: 12, cy: 12, r: 3 },
+    { tag: 'path', d: 'M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1' }
   ]
 }
 function attrsOf(p) {

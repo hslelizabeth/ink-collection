@@ -187,9 +187,13 @@ main { padding: 28px 32px 56px; flex: 1; width: 100%; max-width: 1280px; margin:
 /* ---- 图片放大灯箱 ---- */
 .lightbox {
   position: fixed; inset: 0; z-index: 100; background: rgba(28,28,30,.9);
-  display: grid; place-items: center; padding: 24px; cursor: zoom-out;
+  cursor: zoom-out;
 }
-.lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 3px; }
+.lightbox img {
+  position: absolute; inset: 0; margin: auto;
+  max-width: calc(100% - 48px); max-height: calc(100% - 48px);
+  border-radius: 3px;
+}
 
 /* ---- 表单页 / 后台管理 ---- */
 .admin { display: grid; grid-template-columns: 200px 1fr; gap: 24px; }
@@ -332,11 +336,12 @@ footer { border-top: 1px solid var(--line); padding: 20px 32px; font-size: 12px;
     display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
     background: rgba(255,253,246,.96); backdrop-filter: blur(8px);
     border-top: 1px solid var(--line); padding: 4px 0 max(6px, env(safe-area-inset-bottom));
+    overflow-x: auto; scrollbar-width: none;
   }
+  .tabbar::-webkit-scrollbar { display: none; }
   .tabbar a {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    flex: 1 0 auto; min-width: 56px; display: flex; flex-direction: column; align-items: center; gap: 3px;
     padding: 7px 0 5px; color: var(--ink-soft); text-decoration: none; cursor: pointer;
-    min-width: 0;
   }
   .tabbar a svg { width: 22px; height: 22px; stroke: currentColor; }
   .tabbar a span { font-size: 10px; letter-spacing: .1em; }

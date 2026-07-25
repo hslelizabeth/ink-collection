@@ -43,6 +43,10 @@ onMounted(() => loadCategories())
       <CatIcon :name="c.icon || 'generic'" />
       <span>{{ c.name }}</span>
     </router-link>
+    <router-link to="/admin" active-class="active">
+      <CatIcon name="gear" />
+      <span>管理</span>
+    </router-link>
   </nav>
 
   <footer><span>文房藏珍 © 2026</span><span>藏器于身 · 静待知音</span></footer>
