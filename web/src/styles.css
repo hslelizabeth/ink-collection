@@ -110,7 +110,7 @@ main { padding: 28px 32px 56px; flex: 1; width: 100%; max-width: 1280px; margin:
 }
 .item-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(43,43,47,.1); }
 .item-img { aspect-ratio: 4/3; display: grid; place-items: center; position: relative; flex: none; overflow: hidden; }
-.item-img > img { width: 100%; height: 100%; object-fit: cover; }
+.item-img > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .item-img svg { width: 52px; height: 52px; stroke: rgba(255,255,255,.9); }
 .stamp {
   position: absolute; top: 10px; right: 10px; width: 44px; height: 44px; border-radius: 50%;
@@ -141,8 +141,9 @@ main { padding: 28px 32px 56px; flex: 1; width: 100%; max-width: 1280px; margin:
   padding: 4px 14px; font-size: 13px; cursor: pointer; color: var(--ink);
 }
 .chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.search-row { flex: 0 0 100%; }
 .search {
-  margin-left: auto; font: inherit; font-size: 13px; padding: 7px 14px; width: 200px;
+  width: 100%; max-width: 320px; font: inherit; font-size: 13px; padding: 7px 14px;
   border: 1px solid var(--line); border-radius: 20px; background: var(--paper); outline: none;
 }
 .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
@@ -154,14 +155,14 @@ main { padding: 28px 32px 56px; flex: 1; width: 100%; max-width: 1280px; margin:
 /* ---- 详情页 ---- */
 .detail { display: grid; grid-template-columns: 5fr 6fr; gap: 32px; }
 .gallery-main { aspect-ratio: 4/3; border: 1px solid var(--line); border-radius: 4px;
-  display: grid; place-items: center; background: var(--indigo); overflow: hidden; }
-.gallery-main > img { width: 100%; height: 100%; object-fit: cover; object-position: center; background: var(--paper-deep); }
+  display: grid; place-items: center; background: var(--indigo); overflow: hidden; position: relative; }
+.gallery-main > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; background: var(--paper-deep); cursor: zoom-in; }
 .gallery-main svg { width: 90px; height: 90px; stroke: rgba(255,255,255,.85); }
 .thumbs { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 .thumb { width: 72px; aspect-ratio: 4/3; border: 1px solid var(--line); border-radius: 3px;
-  display: grid; place-items: center; cursor: pointer; opacity: .75; background: var(--paper-deep); overflow: hidden; padding: 0; }
+  display: grid; place-items: center; cursor: pointer; opacity: .75; background: var(--paper-deep); overflow: hidden; padding: 0; position: relative; }
 .thumb.active { outline: 2px solid var(--cinnabar); opacity: 1; }
-.thumb > img { width: 100%; height: 100%; object-fit: cover; }
+.thumb > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .thumb svg { width: 26px; height: 26px; stroke: var(--indigo); }
 .d-title { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .d-title h2 { font-size: 26px; letter-spacing: .08em; }
@@ -182,6 +183,13 @@ main { padding: 28px 32px 56px; flex: 1; width: 100%; max-width: 1280px; margin:
 .rel-chip img { width: 22px; height: 22px; object-fit: cover; border-radius: 2px; }
 .d-note { margin-top: 22px; font-size: 13px; color: var(--ink-soft); line-height: 2;
   border-left: 3px solid var(--gold); background: var(--card); padding: 12px 16px; white-space: pre-wrap; }
+
+/* ---- 图片放大灯箱 ---- */
+.lightbox {
+  position: fixed; inset: 0; z-index: 100; background: rgba(28,28,30,.9);
+  display: grid; place-items: center; padding: 24px; cursor: zoom-out;
+}
+.lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 3px; }
 
 /* ---- 表单页 / 后台管理 ---- */
 .admin { display: grid; grid-template-columns: 200px 1fr; gap: 24px; }
@@ -369,16 +377,12 @@ footer { border-top: 1px solid var(--line); padding: 20px 32px; font-size: 12px;
   .item-body h4 { font-size: 15px; }
   .item-price { margin-top: 6px; font-size: 13px; }
 
-  /* 筛选：分组纵向排列，组内标签横向滑动，搜索框全宽 */
+  /* 筛选：分组纵向排列，组内选项换行展示（选项再多也不出框），搜索框全宽 */
   .filters { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px; }
-  .filter-group { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-  .filter-group::-webkit-scrollbar { display: none; }
-  .filter-group .fname {
-    flex: none; align-self: center; position: sticky; left: 0; z-index: 2;
-    background: var(--card); padding-right: 8px; margin-right: -2px;
-  }
+  .filter-group { flex-wrap: wrap; row-gap: 8px; }
+  .filter-group .fname { flex: none; align-self: center; }
   .chip { flex: none; padding: 6px 14px; }
-  .search { width: 100%; margin-left: 0; }
+  .search { width: 100%; max-width: none; margin-left: 0; }
 
   /* 详情页 */
   .d-fields { grid-template-columns: 1fr 1fr; }

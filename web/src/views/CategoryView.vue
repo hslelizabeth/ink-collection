@@ -107,6 +107,7 @@ const brands = computed(() => (filterOptions.value.brands || []).filter(b => b))
     </div>
 
     <div class="filters">
+      <div class="search-row"><input class="search" v-model="q" placeholder="搜索名称…"></div>
       <div class="filter-group">
         <span class="fname">状态</span>
         <span class="chip" :class="{ active: status === '' }" @click="setStatus('')">全部</span>
@@ -131,7 +132,6 @@ const brands = computed(() => (filterOptions.value.brands || []).filter(b => b))
           @click="setBrand(b)"
         >{{ b }}</span>
       </div>
-      <input class="search" v-model="q" placeholder="搜索名称…">
       <div class="filter-group sort-group">
         <span class="fname">排序</span>
         <span class="chip" :class="{ active: sort === 'purchase_date' }" @click="setSort('purchase_date')">最新购入</span>

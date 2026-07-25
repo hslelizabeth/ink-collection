@@ -13,6 +13,7 @@ const item = ref(null)
 const loading = ref(true)
 const error = ref('')
 const activeImg = ref(0)
+const zoomed = ref(false) // 图片放大查看
 
 const cat = computed(() => (item.value ? catById(item.value.category_id) : null))
 
@@ -80,7 +81,7 @@ function relDotColor(r) {
       <div class="detail">
         <div>
           <div class="gallery-main" :style="images.length ? {} : { background: cat?.color || '#3a4a5a' }">
-            <img v-if="images.length" :src="images[activeImg].url" :alt="item.name">
+            <img v-if="images.length" :src="images[activeImg].url" :alt="item.name" @click="zoomed = true">
             <CatIcon v-else :name="cat?.icon || 'generic'" />
           </div>
           <div v-if="images.length > 1" class="thumbs">
@@ -114,6 +115,10 @@ function relDotColor(r) {
           </div>
           <div v-if="item.note" class="d-note">{{ item.note }}</div>
         </div>
+      </div>
+      <!-- 图片放大查看 -->
+      <div v-if="zoomed && images.length" class="lightbox" @click="zoomed = false">
+        <img :src="images[activeImg].url" :alt="item.name">
       </div>
     </template>
   </StateBlock>
