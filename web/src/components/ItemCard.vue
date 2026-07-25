@@ -38,7 +38,7 @@ const priceText = computed(() => {
     <div class="item-img" :style="item.cover_thumb_url ? {} : { background: color }">
       <img v-if="item.cover_thumb_url" :src="item.cover_thumb_url" :alt="item.name" loading="lazy">
       <CatIcon v-else :name="icon" />
-      <span class="stamp" :class="{ sold: item.status === 'parted' }">{{ statusLabel(item.status) }}</span>
+      <span v-if="item.status === 'parted'" class="stamp sold">{{ statusLabel(item.status) }}</span>
     </div>
     <div class="item-body">
       <h4>{{ item.name }}</h4>
