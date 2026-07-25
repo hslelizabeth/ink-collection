@@ -1,0 +1,14 @@
+services:
+  ink-collection:
+    build: .
+    # 使用 GitHub Actions 构建好的镜像时，注释掉上面的 build，改用下面这行：
+    # image: ghcr.io/<你的用户名>/<仓库名>:latest
+    image: ink-collection:latest
+    container_name: ink-collection
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped

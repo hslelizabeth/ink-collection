@@ -1,0 +1,13 @@
+.toolchain/
+design/
+data/
+server/inkcollection
+server/data/
+web/node_modules/
+web/dist/
+server/web/dist/
+.git/
+*.log
+Dockerfile
+docker-compose.yml
+README.md

@@ -1,0 +1,9 @@
+.toolchain/
+data/
+server/data/
+server/inkcollection
+web/node_modules/
+web/dist/
+server/web/dist/
+*.log
+.DS_Store

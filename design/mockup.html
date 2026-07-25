@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>文房藏珍 · 设计稿预览</title>
+<style>
+  /* ============ 预览器外壳（非网站本身） ============ */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #1c1c1e; font-family: "Noto Serif SC","Source Han Serif SC","Songti SC","SimSun",serif; }
+  .toolbar {
+    position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; gap: 12px;
+    align-items: center; justify-content: space-between;
+    padding: 10px 20px; background: #2a2a2c; border-bottom: 1px solid #3a3a3c;
+  }
+  .toolbar .label { color: #98989d; font-size: 13px; letter-spacing: .1em; }
+  .btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-group button {
+    font: inherit; font-size: 13px; padding: 6px 14px; cursor: pointer;
+    background: transparent; color: #d1d1d6; border: 1px solid #48484a; border-radius: 3px;
+  }
+  .btn-group button.active { background: #b03a2e; border-color: #b03a2e; color: #fff; }
+  .stage { display: flex; justify-content: center; padding: 24px 12px 48px; }
+  .preview {
+    width: 1280px; max-width: 100%; container-type: inline-size;
+    background: #f7f2e7; box-shadow: 0 12px 48px rgba(0,0,0,.5);
+    transition: width .35s ease; min-height: 90vh; position: relative;
+  }
+
+  /* ============ 网站主体（以下为真正的设计） ============ */
+  :root {
+    --paper: #f7f2e7; --paper-deep: #efe8d8; --card: #fffdf6;
+    --ink: #2b2b2f; --ink-soft: #6b6b70;
+    --cinnabar: #b03a2e; --indigo: #3a4a5a; --gold: #a9853c;
+    --line: #ddd3bd;
+  }
+  .preview { color: var(--ink); background:
+      radial-gradient(circle at 20% 10%, rgba(169,133,60,.05), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(176,58,46,.04), transparent 45%),
+      var(--paper); }
+
+  .site-header {
+    display: flex; align-items: center; gap: 16px; padding: 18px 32px;
+    border-bottom: 1px solid var(--line); background: rgba(255,253,246,.7);
+  }
+  .seal {
+    width: 46px; height: 46px; background: var(--cinnabar); color: #fff;
+    display: grid; place-items: center; font-size: 22px; font-weight: 700;
+    border-radius: 4px; box-shadow: 2px 2px 0 rgba(176,58,46,.25); flex: none;
+  }
+  .site-title { font-size: 22px; letter-spacing: .18em; font-weight: 700; }
+  .site-sub { font-size: 12px; color: var(--ink-soft); letter-spacing: .32em; margin-top: 2px; }
+  .site-nav { margin-left: auto; display: flex; gap: 4px; overflow-x: auto; }
+  .site-nav a {
+    text-decoration: none; color: var(--ink); font-size: 15px; padding: 8px 14px;
+    letter-spacing: .12em; border-bottom: 2px solid transparent; white-space: nowrap; cursor: pointer;
+  }
+  .site-nav a.active { color: var(--cinnabar); border-bottom-color: var(--cinnabar); }
+  .site-nav a:hover { color: var(--cinnabar); }
+
+  /* ---- 移动端底部 Tab 栏（H5 风格，默认隐藏） ---- */
+  .tabbar { display: none; }
+
+  main { padding: 28px 32px 56px; }
+  section[data-page][hidden] { display: none; }
+
+  /* ---- 首页 ---- */
+  .hero { display: flex; gap: 28px; align-items: stretch; margin-bottom: 28px; }
+  .hero-text { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .hero-text h2 { font-size: 30px; letter-spacing: .14em; font-weight: 700; line-height: 1.5; }
+  .hero-text h2 em { font-style: normal; color: var(--cinnabar); }
+  .hero-text p { margin-top: 12px; color: var(--ink-soft); font-size: 14px; letter-spacing: .08em; line-height: 1.9; }
+  .hero-verse {
+    flex: none; writing-mode: vertical-rl; font-size: 20px; letter-spacing: .5em;
+    color: var(--indigo); padding: 8px 4px; border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line); opacity: .85;
+  }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat {
+    background: var(--card); border: 1px solid var(--line);
+    padding: 16px 20px; border-radius: 4px;
+  }
+  .stat b { font-size: 26px; font-weight: 700; }
+  .stat span { display: block; margin-top: 4px; font-size: 12px; color: var(--ink-soft); letter-spacing: .2em; }
+  .stat.accent b { color: var(--cinnabar); }
+  .stat.gold b { color: var(--gold); }
+
+  /* ---- 分类统计 ---- */
+  .catstats { background: var(--card); border: 1px solid var(--line); border-radius: 4px;
+    padding: 22px 24px; margin-bottom: 32px; }
+  .catstats-row { display: grid; grid-template-columns: 90px 1fr 150px 130px; gap: 14px;
+    align-items: center; padding: 12px 0; border-bottom: 1px dashed var(--line); font-size: 14px; }
+  .catstats-row:last-of-type { border-bottom: none; }
+  .catstats-row .cname { letter-spacing: .2em; font-weight: 600; }
+  .catstats-bar { height: 10px; background: var(--paper-deep); border-radius: 5px; overflow: hidden; }
+  .catstats-bar i { display: block; height: 100%; border-radius: 5px; }
+  .catstats-row .cnum { color: var(--ink-soft); font-size: 13px; }
+  .catstats-row .cprice { color: var(--gold); text-align: right; font-weight: 600; }
+
+  .cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 36px; }
+  .cat {
+    background: var(--card); border: 1px solid var(--line); border-radius: 4px;
+    padding: 24px 20px; cursor: pointer; position: relative; overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .cat:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(43,43,47,.08); }
+  .cat svg { width: 40px; height: 40px; stroke: var(--indigo); }
+  .cat h3 { margin-top: 12px; font-size: 18px; letter-spacing: .3em; }
+  .cat p { margin-top: 6px; font-size: 12px; color: var(--ink-soft); }
+  .cat .count { position: absolute; top: 14px; right: 16px; font-size: 13px; color: var(--gold); }
+
+  .section-title { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+  .section-title h3 { font-size: 19px; letter-spacing: .2em; }
+  .section-title .more { font-size: 12px; color: var(--ink-soft); letter-spacing: .1em; cursor: pointer; }
+  .section-title::after { content: ""; flex: 1; height: 1px; background: var(--line); order: 2; }
+  .section-title .more { order: 3; }
+
+  .recent { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+
+  /* ---- 藏品卡片 ---- */
+  .item-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 4px;
+    overflow: hidden; cursor: pointer; transition: transform .2s, box-shadow .2s;
+  }
+  .item-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(43,43,47,.1); }
+  .item-img { aspect-ratio: 4/3; display: grid; place-items: center; position: relative; flex: none; }
+  .item-img svg { width: 52px; height: 52px; stroke: rgba(255,255,255,.9); }
+  .stamp {
+    position: absolute; top: 10px; right: 10px; width: 44px; height: 44px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 11px; letter-spacing: .05em;
+    color: #fff; background: var(--cinnabar); border: 1.5px solid rgba(255,255,255,.65);
+    transform: rotate(8deg); box-shadow: 0 1px 4px rgba(0,0,0,.2);
+  }
+  .stamp.sold { background: var(--gold); }
+  .item-body { padding: 14px 16px 16px; flex: 1; }
+  .item-body h4 { font-size: 16px; letter-spacing: .04em; }
+  .item-meta { margin-top: 6px; font-size: 12px; color: var(--ink-soft); display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag { border: 1px solid var(--line); border-radius: 2px; padding: 1px 7px; font-size: 11px; color: var(--indigo); background: var(--paper); }
+  .item-price { margin-top: 10px; font-size: 14px; color: var(--gold); }
+
+  /* ---- 列表页 ---- */
+  .crumb { font-size: 13px; color: var(--ink-soft); margin-bottom: 18px; letter-spacing: .1em; }
+  .crumb b { color: var(--ink); font-weight: 700; }
+  .filters { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; margin-bottom: 22px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 14px 18px; }
+  .filter-group { display: flex; align-items: center; gap: 8px; font-size: 13px; flex-wrap: wrap; }
+  .filter-group .fname { color: var(--ink-soft); letter-spacing: .15em; }
+  .chip {
+    border: 1px solid var(--line); background: var(--paper); border-radius: 20px;
+    padding: 4px 14px; font-size: 13px; cursor: pointer; color: var(--ink);
+  }
+  .chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .search {
+    margin-left: auto; font: inherit; font-size: 13px; padding: 7px 14px; width: 200px;
+    border: 1px solid var(--line); border-radius: 20px; background: var(--paper); outline: none;
+  }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+
+  /* ---- 详情页 ---- */
+  .detail { display: grid; grid-template-columns: 5fr 6fr; gap: 32px; }
+  .gallery-main { aspect-ratio: 4/3; border: 1px solid var(--line); border-radius: 4px;
+    display: grid; place-items: center; background: var(--indigo); }
+  .gallery-main svg { width: 90px; height: 90px; stroke: rgba(255,255,255,.85); }
+  .thumbs { display: flex; gap: 10px; margin-top: 12px; }
+  .thumb { width: 72px; aspect-ratio: 4/3; border: 1px solid var(--line); border-radius: 3px;
+    display: grid; place-items: center; cursor: pointer; opacity: .75; background: var(--paper-deep); }
+  .thumb.active { outline: 2px solid var(--cinnabar); opacity: 1; }
+  .thumb svg { width: 26px; height: 26px; stroke: var(--indigo); }
+  .d-title { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .d-title h2 { font-size: 26px; letter-spacing: .08em; }
+  .d-fields { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+    border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+  .d-field { padding: 12px 16px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--card); }
+  .d-field span { display: block; font-size: 12px; color: var(--ink-soft); letter-spacing: .2em; margin-bottom: 4px; }
+  .d-field b { font-size: 15px; font-weight: 600; }
+  .rel-block { margin-top: 22px; }
+  .rel-block h4 { font-size: 15px; letter-spacing: .2em; margin-bottom: 10px; color: var(--indigo); }
+  .rel-chips { display: flex; gap: 10px; flex-wrap: wrap; }
+  .rel-chip { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line);
+    background: var(--card); border-radius: 3px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+  .rel-chip .dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); }
+  .d-note { margin-top: 22px; font-size: 13px; color: var(--ink-soft); line-height: 2;
+    border-left: 3px solid var(--gold); padding-left: 14px; background: var(--card); padding: 12px 16px; }
+
+  /* ---- 后台管理 ---- */
+  .admin { display: grid; grid-template-columns: 200px 1fr; gap: 24px; }
+  .admin-side { border: 1px solid var(--line); background: var(--card); border-radius: 4px; padding: 10px; align-self: start; }
+  .admin-side a { display: block; padding: 10px 14px; font-size: 14px; letter-spacing: .1em;
+    color: var(--ink); text-decoration: none; border-radius: 3px; cursor: pointer; white-space: nowrap; }
+  .admin-side a.active { background: var(--ink); color: var(--paper); }
+  .panel { border: 1px solid var(--line); background: var(--card); border-radius: 4px; padding: 22px 24px; margin-bottom: 20px; }
+  .panel h3 { font-size: 17px; letter-spacing: .15em; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .btn {
+    font: inherit; font-size: 13px; padding: 7px 18px; cursor: pointer; letter-spacing: .1em;
+    background: var(--cinnabar); color: #fff; border: none; border-radius: 3px;
+  }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  .cat-cards { display: none; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-soft); font-weight: 600; letter-spacing: .1em; font-size: 12px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+  .form-item { display: flex; flex-direction: column; gap: 6px; }
+  .form-item.full { grid-column: 1 / -1; }
+  .form-item label { font-size: 12px; color: var(--ink-soft); letter-spacing: .15em; }
+  .form-item input, .form-item select, .form-item textarea {
+    font: inherit; font-size: 14px; padding: 9px 12px; border: 1px solid var(--line);
+    border-radius: 3px; background: var(--paper); outline: none;
+  }
+  .form-item input:focus, .form-item select:focus { border-color: var(--cinnabar); }
+  .upload {
+    border: 1.5px dashed var(--line); border-radius: 4px; padding: 26px; text-align: center;
+    color: var(--ink-soft); font-size: 13px; letter-spacing: .1em; background: var(--paper);
+  }
+
+  footer { border-top: 1px solid var(--line); padding: 20px 32px; font-size: 12px;
+    color: var(--ink-soft); letter-spacing: .2em; display: flex; justify-content: space-between; }
+
+  /* ============ 平板 ============ */
+  @container (max-width: 900px) {
+    .cats, .recent { grid-template-columns: repeat(2, 1fr); }
+    .grid { grid-template-columns: repeat(3, 1fr); }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .detail { grid-template-columns: 1fr; }
+    .admin { grid-template-columns: 1fr; }
+    .admin-side { display: flex; gap: 4px; }
+  }
+
+  /* ============ 手机 H5 定制 ============ */
+  @container (max-width: 600px) {
+    /* 顶栏：App 式紧凑居中 */
+    .site-header { padding: 12px 16px; justify-content: center; position: sticky; top: 0; z-index: 10;
+      background: rgba(247,242,231,.94); backdrop-filter: blur(6px); }
+    .seal { width: 34px; height: 34px; font-size: 17px; }
+    .site-title { font-size: 18px; letter-spacing: .22em; }
+    .site-sub { display: none; }
+    .site-nav { display: none; } /* 导航移到底部 Tab 栏 */
+
+    main { padding: 16px 14px 90px; } /* 底部留白给 Tab 栏 */
+
+    /* 底部 Tab 栏 */
+    .tabbar {
+      display: flex; position: sticky; bottom: 0; z-index: 20;
+      background: rgba(255,253,246,.96); backdrop-filter: blur(8px);
+      border-top: 1px solid var(--line); padding: 4px 0 max(6px, env(safe-area-inset-bottom));
+    }
+    .tabbar a {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 7px 0 5px; color: var(--ink-soft); text-decoration: none; cursor: pointer;
+    }
+    .tabbar a svg { width: 22px; height: 22px; stroke: currentColor; }
+    .tabbar a span { font-size: 10px; letter-spacing: .1em; }
+    .tabbar a.active { color: var(--cinnabar); }
+
+    footer { display: none; }
+
+    /* 首页 */
+    .hero { margin-bottom: 18px; }
+    .hero-verse { display: none; }
+    .hero-text h2 { font-size: 21px; }
+    .hero-text p { font-size: 12px; }
+    .stats { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 18px; }
+    .stat { padding: 12px 14px; }
+    .stat b { font-size: 20px; }
+
+    .catstats { padding: 16px; margin-bottom: 22px; }
+    .catstats-row { grid-template-columns: 64px 1fr 88px; gap: 10px; padding: 10px 0; }
+    .catstats-row .cnum { display: none; } /* 手机上数量并入名称行 */
+    .catstats-row .cname { font-size: 13px; }
+    .catstats-row .cname small { display: block; font-weight: 400; color: var(--ink-soft); font-size: 11px; letter-spacing: .05em; margin-top: 2px; }
+
+    .cats { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 24px; }
+    .cat { padding: 14px; display: flex; align-items: center; gap: 12px; }
+    .cat svg { width: 30px; height: 30px; flex: none; }
+    .cat h3 { margin-top: 0; font-size: 15px; letter-spacing: .15em; }
+    .cat p { font-size: 11px; margin-top: 2px; }
+    .cat .count { display: none; }
+
+    /* 卡片：手机端横向布局（左图右文），触控高度充足 */
+    .recent, .grid { grid-template-columns: 1fr; gap: 10px; }
+    .item-card { display: flex; align-items: stretch; min-height: 96px; }
+    .item-img { width: 118px; aspect-ratio: auto; }
+    .item-img svg { width: 34px; height: 34px; }
+    .stamp { width: 36px; height: 36px; font-size: 10px; top: 6px; right: 6px; }
+    .item-body { padding: 10px 12px; display: flex; flex-direction: column; justify-content: center; }
+    .item-body h4 { font-size: 15px; }
+    .item-price { margin-top: 6px; font-size: 13px; }
+
+    /* 筛选：分组纵向排列，组内标签横向滑动，搜索框保留 */
+    .filters { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px; }
+    .filter-group { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .filter-group::-webkit-scrollbar { display: none; }
+    .filter-group .fname { flex: none; align-self: center; }
+    .chip { flex: none; padding: 6px 14px; }
+    .search { width: 100%; margin-left: 0; }
+
+    /* 详情页 */
+    .d-fields { grid-template-columns: 1fr 1fr; }
+    .d-title h2 { font-size: 21px; }
+    .thumb { width: 60px; }
+
+    /* 管理页：品类表格改为卡片列表 */
+    .admin-side { overflow-x: auto; }
+    .admin-side a { flex: none; }
+    .panel { padding: 16px; }
+    .config-table { display: none; }
+    .cat-cards { display: grid; gap: 10px; }
+    .cat-card { border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; background: var(--paper); font-size: 13px; }
+    .cc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .cc-head b { font-size: 15px; letter-spacing: .15em; }
+    .cc-row { display: flex; gap: 10px; padding: 5px 0; align-items: center; }
+    .cc-row > span:first-child { color: var(--ink-soft); flex: none; width: 4.5em; letter-spacing: .1em; }
+    .form-grid { grid-template-columns: 1fr; }
+    .btn { padding: 9px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 预览器工具栏：仅用于预览，不属于网站 -->
+<div class="toolbar">
+  <span class="label">文房藏珍 · 设计稿</span>
+  <div class="btn-group" id="pageTabs">
+    <button data-page="home" class="active">首页总览</button>
+    <button data-page="list">列表页</button>
+    <button data-page="detail">详情页</button>
+    <button data-page="admin">后台管理</button>
+  </div>
+  <div class="btn-group" id="deviceTabs">
+    <button data-w="1280px" class="active">桌面 1280</button>
+    <button data-w="768px">平板 768</button>
+    <button data-w="390px">手机 390</button>
+  </div>
+</div>
+
+<div class="stage">
+<div class="preview" id="preview">
+
+  <header class="site-header">
+    <div class="seal">藏</div>
+    <div>
+      <div class="site-title">文房藏珍</div>
+      <div class="site-sub">笔 · 墨 · 砚 · 条</div>
+    </div>
+    <nav class="site-nav">
+      <a class="active">总览</a><a>钢笔</a><a>墨水</a><a>砚台</a><a>墨条</a><a>管理</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ============ 首页 ============ -->
+    <section data-page="home">
+      <div class="hero">
+        <div class="hero-text">
+          <h2>藏器于身，<em>静待知音</em></h2>
+          <p>记录每一支笔、每一锭墨的来处与归处。<br>收藏流转，皆有痕迹。</p>
+        </div>
+        <div class="hero-verse">笔墨纸砚，文房四宝</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat accent"><b>42</b><span>当前收藏</span></div>
+        <div class="stat gold"><b>¥ 68,400</b><span>收藏总值</span></div>
+      </div>
+
+      <div class="section-title"><h3>分类统计</h3><span class="more">按收藏金额</span></div>
+      <div class="catstats">
+        <div class="catstats-row">
+          <span class="cname">钢笔<small>18 件</small></span>
+          <span class="catstats-bar"><i style="width:85%;background:#3a4a5a"></i></span>
+          <span class="cnum">18 件 · 占比 47%</span><span class="cprice">¥ 32,400</span>
+        </div>
+        <div class="catstats-row">
+          <span class="cname">砚台<small>8 件</small></span>
+          <span class="catstats-bar"><i style="width:76%;background:#5c4a3a"></i></span>
+          <span class="cnum">8 件 · 占比 42%</span><span class="cprice">¥ 28,900</span>
+        </div>
+        <div class="catstats-row">
+          <span class="cname">墨水<small>12 件</small></span>
+          <span class="catstats-bar"><i style="width:12%;background:#2b3a67"></i></span>
+          <span class="cnum">12 件 · 占比 7%</span><span class="cprice">¥ 4,600</span>
+        </div>
+        <div class="catstats-row">
+          <span class="cname">墨条<small>4 件</small></span>
+          <span class="catstats-bar"><i style="width:7%;background:#3c3c40"></i></span>
+          <span class="cnum">4 件 · 占比 4%</span><span class="cprice">¥ 2,500</span>
+        </div>
+      </div>
+
+      <div class="section-title"><h3>藏品品类</h3></div>
+      <div class="cats">
+        <div class="cat">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M12 2.5c3.6 0 5.8 2.1 5.8 5.3 0 4.2-2.6 8.3-5.8 11.7-3.2-3.4-5.8-7.5-5.8-11.7C6.2 4.6 8.4 2.5 12 2.5z"/><path d="M12 19.5v-7.2"/><circle cx="12" cy="10.3" r="1.3"/></svg>
+          <div><h3>钢笔</h3><p>18 件 · ¥ 32,400</p></div><span class="count">18 件</span>
+        </div>
+        <div class="cat">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M12 3c3 4.5 6 8 6 11a6 6 0 01-12 0c0-3 3-6.5 6-11z"/></svg>
+          <div><h3>墨水</h3><p>12 件 · ¥ 4,600</p></div><span class="count">12 件</span>
+        </div>
+        <div class="cat">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><rect x="3" y="5.5" width="18" height="13" rx="2"/><rect x="6.5" y="8.5" width="11" height="7" rx="1"/><path d="M8.8 12q1.6-1.4 3.2 0t3.2 0"/></svg>
+          <div><h3>砚台</h3><p>8 件 · ¥ 28,900</p></div><span class="count">8 件</span>
+        </div>
+        <div class="cat">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><rect x="9" y="4" width="6" height="16" rx="1.5"/><path d="M9 8h6M12 11v5"/></svg>
+          <div><h3>墨条</h3><p>4 件 · ¥ 2,500</p></div><span class="count">4 件</span>
+        </div>
+      </div>
+
+      <div class="section-title"><h3>最新入库</h3><span class="more">查看全部 ›</span></div>
+      <div class="recent">
+        <div class="item-card">
+          <div class="item-img" style="background:#3a4a5a"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M12 2.5c3.6 0 5.8 2.1 5.8 5.3 0 4.2-2.6 8.3-5.8 11.7-3.2-3.4-5.8-7.5-5.8-11.7C6.2 4.6 8.4 2.5 12 2.5z"/><path d="M12 19.5v-7.2"/><circle cx="12" cy="10.3" r="1.3"/></svg><span class="stamp">收藏</span></div>
+          <div class="item-body"><h4>写乐 长刀研 21K</h4><div class="item-meta"><span class="tag">Sailor</span><span class="tag">NMF 尖</span></div><div class="item-price">购入 ¥ 5,800</div></div>
+        </div>
+        <div class="item-card">
+          <div class="item-img" style="background:#2b3a67"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M12 3c3 4.5 6 8 6 11a6 6 0 01-12 0c0-3 3-6.5 6-11z"/></svg><span class="stamp">收藏</span></div>
+          <div class="item-body"><h4>色彩雫 月夜</h4><div class="item-meta"><span class="tag">PILOT</span><span class="tag">蓝黑</span></div><div class="item-price">购入 ¥ 128</div></div>
+        </div>
+        <div class="item-card">
+          <div class="item-img" style="background:#5c4a3a"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><rect x="3" y="5.5" width="18" height="13" rx="2"/><rect x="6.5" y="8.5" width="11" height="7" rx="1"/><path d="M8.8 12q1.6-1.4 3.2 0t3.2 0"/></svg><span class="stamp">收藏</span></div>
+          <div class="item-body"><h4>端砚 老坑荷叶砚</h4><div class="item-meta"><span class="tag">端溪</span><span class="tag">老坑</span></div><div class="item-price">购入 ¥ 12,000</div></div>
+        </div>
+        <div class="item-card">
+          <div class="item-img" style="background:#3c3c40"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><rect x="9" y="4" width="6" height="16" rx="1.5"/><path d="M9 8h6M12 11v5"/></svg><span class="stamp sold">已结缘</span></div>
+          <div class="item-body"><h4>曹素功 紫玉光</h4><div class="item-meta"><span class="tag">上海墨厂</span><span class="tag">油烟</span></div><div class="item-price">结缘 ¥ 2,600</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 列表页 ============ -->
+    <section data-page="list" hidden>
+      <div class="crumb">总览 / <b>钢笔</b>（18 件）</div>
+      <div class="filters">
+        <div class="filter-group"><span class="fname">状态</span>
+          <span class="chip active">全部</span><span class="chip">收藏</span><span class="chip">已结缘</span></div>
+        <div class="filter-group"><span class="fname">笔尖</span>
+          <span class="chip active">全部</span><span class="chip">EF</span><span class="chip">F</span><span class="chip">M</span><span class="chip">B</span><span class="chip">长刀研</span></div>
+        <div class="filter-group"><span class="fname">品牌</span>
+          <span class="chip active">全部</span><span class="chip">写乐</span><span class="chip">百乐</span><span class="chip">万宝龙</span></div>
+        <input class="search" placeholder="搜索名称…">
+      </div>
+      <div class="grid">
+        <div class="item-card">
+          <div class="item-img" style="background:#3a4a5a"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M12 2.5c3.6 0 5.8 2.1 5.8 5.3 0 4.2-2.6 8.3-5.8 11.7-3.2-3.4-5.8-7.5-5.8-11.7C6.2 4.6 8.4 2.5 12 2.5z"/><path d="M12 19.5v-7.2"/><circle cx="12" cy="10.3" r="1.3"/></svg><span class="stamp">收藏</span></div>
+          <div class="item-body"><h4>写乐 长刀研 21K</h4><div class="item-meta"><span class="tag">Sailor</span><span class="tag">NMF</span></div><div class="item-price">购入 ¥ 5,800</div></div>
+        </div>
+        <div class="item-card">
+          <div class="item-img" style="background:#6b3a3a"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M12 2.5c3.6 0 5.8 2.1 5.8 5.3 0 4.2-2.6 8.3-5.8 11.7-3.2-3.4-5.8-7.5-5.8-11.7C6.2 4.6 8.4 2.5 12 2.5z"/><path d="M12 19.5v-7.2"/><circle cx="12" cy="10.3" r="1.3"/></svg><span class="stamp">收藏</span></div>
+          <div class="item-body"><h4>万宝龙 大班 146</h4><div class="item-meta"><span class="tag">Montblanc</span><span class="tag">F</span></div><div class="item-price">购入 ¥ 4,200</div></div>
+        </div>
+        <div class="item-card">
+          <div class="item-img" style="background:#3a5a4a"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M12 2.5c3.6 0 5.8 2.1 5.8 5.3 0 4.2-2.6 8.3-5.8 11.7-3.2-3.4-5.8-7.5-5.8-11.7C6.2 4.6 8.4 2.5 12 2.5z"/><path d="M12 19.5v-7.2"/><circle cx="12" cy="10.3" r="1.3"/></svg><span class="stamp sold">已结缘</span></div>
+          <div class="item-body"><h4>百乐 Custom 823</h4><div class="item-meta"><span class="tag">PILOT</span><span class="tag">M</span></div><div class="item-price">结缘 ¥ 2,100</div></div>
+        </div>
+        <div class="item-card">
+          <div class="item-img" style="background:#54486b"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M12 2.5c3.6 0 5.8 2.1 5.8 5.3 0 4.2-2.6 8.3-5.8 11.7-3.2-3.4-5.8-7.5-5.8-11.7C6.2 4.6 8.4 2.5 12 2.5z"/><path d="M12 19.5v-7.2"/><circle cx="12" cy="10.3" r="1.3"/></svg><span class="stamp">收藏</span></div>
+          <div class="item-body"><h4>凌美 2000</h4><div class="item-meta"><span class="tag">LAMY</span><span class="tag">EF</span></div><div class="item-price">购入 ¥ 1,500</div></div>
+        </div>
+        <div class="item-card">
+          <div class="item-img" style="background:#6b5a3a"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M12 2.5c3.6 0 5.8 2.1 5.8 5.3 0 4.2-2.6 8.3-5.8 11.7-3.2-3.4-5.8-7.5-5.8-11.7C6.2 4.6 8.4 2.5 12 2.5z"/><path d="M12 19.5v-7.2"/><circle cx="12" cy="10.3" r="1.3"/></svg><span class="stamp">收藏</span></div>
+          <div class="item-body"><h4>白金 3776 教堂蓝</h4><div class="item-meta"><span class="tag">Platinum</span><span class="tag">SF</span></div><div class="item-price">购入 ¥ 680</div></div>
+        </div>
+        <div class="item-card">
+          <div class="item-img" style="background:#40506b"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M12 2.5c3.6 0 5.8 2.1 5.8 5.3 0 4.2-2.6 8.3-5.8 11.7-3.2-3.4-5.8-7.5-5.8-11.7C6.2 4.6 8.4 2.5 12 2.5z"/><path d="M12 19.5v-7.2"/><circle cx="12" cy="10.3" r="1.3"/></svg><span class="stamp">收藏</span></div>
+          <div class="item-body"><h4>百利金 M800 绿条</h4><div class="item-meta"><span class="tag">Pelikan</span><span class="tag">B</span></div><div class="item-price">购入 ¥ 3,900</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 详情页 ============ -->
+    <section data-page="detail" hidden>
+      <div class="crumb">总览 / 钢笔 / <b>写乐 长刀研 21K</b></div>
+      <div class="detail">
+        <div>
+          <div class="gallery-main"><svg viewBox="0 0 24 24" fill="none" stroke-width="1"><path d="M12 2.5c3.6 0 5.8 2.1 5.8 5.3 0 4.2-2.6 8.3-5.8 11.7-3.2-3.4-5.8-7.5-5.8-11.7C6.2 4.6 8.4 2.5 12 2.5z"/><path d="M12 19.5v-7.2"/><circle cx="12" cy="10.3" r="1.3"/></svg></div>
+          <div class="thumbs">
+            <div class="thumb active"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M5 17l4-4 3 3 3-3 4 4"/></svg></div>
+            <div class="thumb"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M5 17l4-4 3 3 3-3 4 4"/></svg></div>
+            <div class="thumb"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M5 17l4-4 3 3 3-3 4 4"/></svg></div>
+            <div class="thumb"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M5 17l4-4 3 3 3-3 4 4"/></svg></div>
+          </div>
+        </div>
+        <div>
+          <div class="d-title"><h2>写乐 长刀研 21K</h2><span class="stamp" style="position:static;transform:rotate(4deg)">收藏</span></div>
+          <div class="d-fields">
+            <div class="d-field"><span>品牌</span><b>Sailor 写乐</b></div>
+            <div class="d-field"><span>笔尖类型</span><b>长刀研 NMF</b></div>
+            <div class="d-field"><span>购入时间</span><b>2024-03-15</b></div>
+            <div class="d-field"><span>购入价格</span><b>¥ 5,800</b></div>
+            <div class="d-field"><span>结缘时间</span><b>—</b></div>
+            <div class="d-field"><span>结缘价格</span><b>—</b></div>
+          </div>
+          <div class="rel-block">
+            <h4>搭配墨水</h4>
+            <div class="rel-chips">
+              <span class="rel-chip"><span class="dot" style="background:#2b3a67"></span>色彩雫 月夜</span>
+              <span class="rel-chip"><span class="dot" style="background:#1d1d22"></span>写乐 极黑</span>
+              <span class="rel-chip"><span class="dot" style="background:#5a1f1f"></span>戴阿米 成犊之魂</span>
+            </div>
+          </div>
+          <div class="d-note">长刀研笔尖为写乐引以为傲的特殊研磨，逆锋出锋，横细竖粗，近毛笔之韵。此支为双层刀尖，品相近新。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 后台管理 ============ -->
+    <section data-page="admin" hidden>
+      <div class="admin">
+        <aside class="admin-side">
+          <a>藏品管理</a><a class="active">品类配置</a><a>数据备份</a>
+        </aside>
+        <div>
+          <div class="panel">
+            <h3>品类配置 <button class="btn" style="margin-left:auto">+ 新增品类</button></h3>
+            <table class="config-table">
+              <tr><th>品类</th><th>通用字段</th><th>专属字段</th><th>关联</th><th>操作</th></tr>
+              <tr><td>钢笔</td><td>名称/品牌/状态/图片/购入结缘信息</td><td><span class="tag">笔尖类型</span></td><td>↔ 墨水（多对多）</td><td><button class="btn ghost">编辑</button></td></tr>
+              <tr><td>墨水</td><td>同上</td><td><span class="tag">颜色</span></td><td>↔ 钢笔</td><td><button class="btn ghost">编辑</button></td></tr>
+              <tr><td>砚台</td><td>同上</td><td><span class="tag">坑口</span></td><td>—</td><td><button class="btn ghost">编辑</button></td></tr>
+              <tr><td>墨条</td><td>同上</td><td><span class="tag">年代</span><span class="tag">类型</span></td><td>—</td><td><button class="btn ghost">编辑</button></td></tr>
+            </table>
+            <!-- 移动端品类卡片（窄屏替代表格） -->
+            <div class="cat-cards">
+              <div class="cat-card">
+                <div class="cc-head"><b>钢笔</b><button class="btn ghost">编辑</button></div>
+                <div class="cc-row"><span>通用字段</span>名称 / 品牌 / 状态 / 图片 / 购入结缘信息</div>
+                <div class="cc-row"><span>专属字段</span><span><span class="tag">笔尖类型</span></span></div>
+                <div class="cc-row"><span>关联</span>↔ 墨水（多对多）</div>
+              </div>
+              <div class="cat-card">
+                <div class="cc-head"><b>墨水</b><button class="btn ghost">编辑</button></div>
+                <div class="cc-row"><span>通用字段</span>同上</div>
+                <div class="cc-row"><span>专属字段</span><span><span class="tag">颜色</span></span></div>
+                <div class="cc-row"><span>关联</span>↔ 钢笔（多对多）</div>
+              </div>
+              <div class="cat-card">
+                <div class="cc-head"><b>砚台</b><button class="btn ghost">编辑</button></div>
+                <div class="cc-row"><span>通用字段</span>同上</div>
+                <div class="cc-row"><span>专属字段</span><span><span class="tag">坑口</span></span></div>
+                <div class="cc-row"><span>关联</span>—</div>
+              </div>
+              <div class="cat-card">
+                <div class="cc-head"><b>墨条</b><button class="btn ghost">编辑</button></div>
+                <div class="cc-row"><span>通用字段</span>同上</div>
+                <div class="cc-row"><span>专属字段</span><span><span class="tag">年代</span> <span class="tag">类型</span></span></div>
+                <div class="cc-row"><span>关联</span>—</div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>新增藏品（以钢笔为例）</h3>
+            <div class="form-grid">
+              <div class="form-item"><label>物品名称</label><input placeholder="如：写乐 长刀研 21K"></div>
+              <div class="form-item"><label>品牌</label><input placeholder="如：Sailor"></div>
+              <div class="form-item"><label>状态</label><select><option>收藏</option><option>已结缘</option></select></div>
+              <div class="form-item"><label>笔尖类型（专属字段）</label><input placeholder="如：长刀研 NMF"></div>
+              <div class="form-item"><label>购入时间</label><input type="date"></div>
+              <div class="form-item"><label>购入价格</label><input placeholder="¥"></div>
+              <div class="form-item full"><label>关联墨水（可多选）</label><input placeholder="搜索并添加墨水…"></div>
+              <div class="form-item full"><label>图片（可多张）</label><div class="upload">点击或拖拽上传图片</div></div>
+              <div class="form-item full"><label>备注</label><textarea rows="3" placeholder=""></textarea></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 移动端底部 Tab 栏（仅窄屏显示） -->
+  <nav class="tabbar">
+    <a class="active">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      <span>总览</span>
+    </a>
+    <a>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 2.5c3.6 0 5.8 2.1 5.8 5.3 0 4.2-2.6 8.3-5.8 11.7-3.2-3.4-5.8-7.5-5.8-11.7C6.2 4.6 8.4 2.5 12 2.5z"/><path d="M12 19.5v-7.2"/><circle cx="12" cy="10.3" r="1.3"/></svg>
+      <span>钢笔</span>
+    </a>
+    <a>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 3c3 4.5 6 8 6 11a6 6 0 01-12 0c0-3 3-6.5 6-11z"/></svg>
+      <span>墨水</span>
+    </a>
+    <a>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><rect x="3" y="5.5" width="18" height="13" rx="2"/><rect x="6.5" y="8.5" width="11" height="7" rx="1"/><path d="M8.8 12q1.6-1.4 3.2 0t3.2 0"/></svg>
+      <span>砚台</span>
+    </a>
+    <a>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><rect x="9" y="4" width="6" height="16" rx="1.5"/><path d="M9 8h6M12 11v5"/></svg>
+      <span>墨条</span>
+    </a>
+  </nav>
+
+  <footer><span>文房藏珍 © 2026</span><span>藏器于身 · 静待知音</span></footer>
+
+</div>
+</div>
+
+<script>
+  const pages = document.querySelectorAll('section[data-page]');
+  function showPage(name) {
+    document.querySelectorAll('#pageTabs button').forEach(b => b.classList.toggle('active', b.dataset.page === name));
+    pages.forEach(s => s.hidden = s.dataset.page !== name);
+  }
+  document.getElementById('pageTabs').addEventListener('click', e => {
+    if (e.target.tagName !== 'BUTTON') return;
+    showPage(e.target.dataset.page);
+  });
+  if (location.hash.length > 1) showPage(location.hash.slice(1));
+  document.getElementById('deviceTabs').addEventListener('click', e => {
+    if (e.target.tagName !== 'BUTTON') return;
+    document.querySelectorAll('#deviceTabs button').forEach(b => b.classList.toggle('active', b === e.target));
+    document.getElementById('preview').style.width = e.target.dataset.w;
+  });
+</script>
+</body>
+</html>
