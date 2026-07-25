@@ -22,6 +22,7 @@ const status = ref('')       // '' | collecting | parted
 const brand = ref('')
 const fieldFilters = ref({}) // { [fieldKey]: value }
 const q = ref('')
+const sort = ref('purchase_date') // purchase_date | brand | price_desc | price_asc
 const filterOptions = ref({ brands: [], fields: {} })
 
 const totalPages = computed(() => Math.max(Math.ceil(total.value / pageSize), 1))
@@ -35,6 +36,7 @@ watch(q, () => {
 function setStatus(v) { status.value = v; page.value = 1; loadItems() }
 function setBrand(v) { brand.value = v; page.value = 1; loadItems() }
 function setField(k, v) { fieldFilters.value[k] = v; page.value = 1; loadItems() }
+function setSort(v) { sort.value = v; page.value = 1; loadItems() }
 function goPage(p) {
   if (p < 1 || p > totalPages.value) return
   page.value = p
@@ -45,7 +47,7 @@ async function loadItems() {
   if (!cat.value) return
   loading.value = true
   error.value = ''
-  const params = { category_id: cat.value.id, page: page.value, page_size: pageSize }
+  const params = { category_id: cat.value.id, page: page.value, page_size: pageSize, sort: sort.value }
   if (status.value) params.status = status.value
   if (brand.value) params.brand = brand.value
   if (q.value.trim()) params.q = q.value.trim()
@@ -130,6 +132,13 @@ const brands = computed(() => (filterOptions.value.brands || []).filter(b => b))
         >{{ b }}</span>
       </div>
       <input class="search" v-model="q" placeholder="搜索名称…">
+      <div class="filter-group sort-group">
+        <span class="fname">排序</span>
+        <span class="chip" :class="{ active: sort === 'purchase_date' }" @click="setSort('purchase_date')">最新购入</span>
+        <span class="chip" :class="{ active: sort === 'brand' }" @click="setSort('brand')">品牌</span>
+        <span class="chip" :class="{ active: sort === 'price_desc' }" @click="setSort('price_desc')">价格高→低</span>
+        <span class="chip" :class="{ active: sort === 'price_asc' }" @click="setSort('price_asc')">价格低→高</span>
+      </div>
     </div>
 
     <StateBlock :loading="loading" :error="error" :empty="!items.length" @retry="loadItems">

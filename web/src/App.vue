@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { store, loadCategories } from './store.js'
 import CatIcon from './components/CatIcon.vue'
+import SealLogo from './components/SealLogo.vue'
 
 const route = useRoute()
 onMounted(() => loadCategories())
@@ -10,10 +11,10 @@ onMounted(() => loadCategories())
 
 <template>
   <header class="site-header">
-    <router-link to="/" class="seal">藏</router-link>
+    <router-link to="/" class="seal"><SealLogo /></router-link>
     <div>
       <div class="site-title">文房藏珍</div>
-      <div class="site-sub">笔 · 墨 · 砚 · 条</div>
+      <div class="site-sub">笔 · 墨 · 纸 · 砚</div>
     </div>
     <nav class="site-nav">
       <router-link to="/" exact-active-class="active">总览</router-link>

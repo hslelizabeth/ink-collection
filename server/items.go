@@ -142,6 +142,20 @@ func (s *Server) listItems(c *gin.Context) {
 		args = append(args, vals[0])
 	}
 
+	// 排序：默认按购入时间倒序（无购入时间按创建时间），支持品牌/价格
+	sort := c.DefaultQuery("sort", "purchase_date")
+	var orderBy string
+	switch sort {
+	case "brand":
+		orderBy = "brand ASC, id DESC"
+	case "price_desc":
+		orderBy = "purchase_price IS NULL, purchase_price DESC, id DESC"
+	case "price_asc":
+		orderBy = "purchase_price IS NULL, purchase_price ASC, id DESC"
+	default: // purchase_date
+		orderBy = "COALESCE(purchase_date, created_at) DESC, id DESC"
+	}
+
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if page < 1 {
 		page = 1
@@ -158,7 +172,7 @@ func (s *Server) listItems(c *gin.Context) {
 		return
 	}
 
-	query := `SELECT ` + itemCols + ` FROM items WHERE ` + cond + ` ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`
+	query := `SELECT ` + itemCols + ` FROM items WHERE ` + cond + ` ORDER BY ` + orderBy + ` LIMIT ? OFFSET ?`
 	qargs := append(append([]any{}, args...), pageSize, (page-1)*pageSize)
 	rows, err := s.db.Query(query, qargs...)
 	if err != nil {

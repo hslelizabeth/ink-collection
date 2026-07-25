@@ -1,7 +1,7 @@
 <script setup>
 // 藏品表单页：新增 /item/new?category=key 与编辑 /item/:id/edit 共用
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { api } from '../api.js'
 import { store, loadCategories, catById, catByKey, showToast } from '../store.js'
 import RelationPicker from '../components/RelationPicker.vue'
@@ -33,6 +33,25 @@ const relations = ref({}) // { [target_key]: [{id, name}] }
 const existingImages = ref([]) // 编辑模式已有图片
 const coverUrl = ref('')
 const newFiles = ref([])       // [{file, preview}]
+
+// 未保存修改跟踪：初始数据填充完成后才开始计脏
+const dirty = ref(false)
+const formReady = ref(false)
+watch([form, relations, newFiles], () => {
+  if (formReady.value) dirty.value = true
+}, { deep: true })
+
+function onBeforeUnload(e) {
+  if (dirty.value) { e.preventDefault(); e.returnValue = '' }
+}
+
+onBeforeRouteLeave((to, from, next) => {
+  if (dirty.value && !window.confirm('当前有未保存的修改，确定离开吗？')) {
+    next(false)
+  } else {
+    next()
+  }
+})
 
 const cat = computed(() => catById(form.value.category_id))
 
@@ -71,8 +90,12 @@ onMounted(async () => {
     error.value = e.message || '加载失败'
   } finally {
     loading.value = false
+    formReady.value = true
   }
 })
+
+onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
+onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload))
 
 function onPickImages(e) {
   for (const f of e.target.files || []) {
@@ -144,11 +167,13 @@ async function save() {
         await api.uploadImages(id, newFiles.value.map(x => x.file))
       } catch {
         showToast('藏品已保存，但部分图片上传失败')
+        dirty.value = false
         router.push(`/item/${id}`)
         return
       }
     }
     showToast(isEdit.value ? '已保存' : '已入库')
+    dirty.value = false
     router.push(`/item/${id}`)
   } catch (e) {
     showToast(e.message || '保存失败')
@@ -162,6 +187,7 @@ async function remove() {
   try {
     await api.deleteItem(itemId.value)
     showToast('已删除')
+    dirty.value = false
     router.push(cat.value ? `/c/${cat.value.key}` : '/')
   } catch (e) {
     showToast(e.message || '删除失败')

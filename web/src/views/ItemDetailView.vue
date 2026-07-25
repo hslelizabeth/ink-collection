@@ -73,8 +73,8 @@ function relDotColor(r) {
     <template v-if="item">
       <div class="crumb">
         <router-link to="/">总览</router-link> /
-        <router-link v-if="cat" :to="`/c/${cat.key}`">{{ item.category_name }}</router-link>
-        <template v-else>{{ item.category_name }}</template> /
+        <router-link v-if="cat" :to="`/c/${cat.key}`">{{ cat.name }}</router-link>
+        <template v-else>{{ item.category?.name || '' }}</template> /
         <b>{{ item.name }}</b>
       </div>
       <div class="detail">
