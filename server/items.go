@@ -116,30 +116,54 @@ func (s *Server) listItems(c *gin.Context) {
 		where = append(where, "category_id = ?")
 		args = append(args, id)
 	}
-	if v := c.Query("status"); v != "" {
-		if v != StatusCollecting && v != StatusParted {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "status 无效"})
-			return
+	if values := c.QueryArray("status"); len(values) > 0 {
+		placeholders := make([]string, 0, len(values))
+		for _, v := range values {
+			if v != StatusCollecting && v != StatusParted {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "status 无效"})
+				return
+			}
+			placeholders = append(placeholders, "?")
+			args = append(args, v)
 		}
-		where = append(where, "status = ?")
-		args = append(args, v)
+		where = append(where, "status IN ("+strings.Join(placeholders, ",")+")")
+	}
+	if values := c.QueryArray("brand"); len(values) > 0 {
+		placeholders := make([]string, 0, len(values))
+		for _, v := range values {
+			if v = strings.TrimSpace(v); v != "" {
+				placeholders = append(placeholders, "?")
+				args = append(args, v)
+			}
+		}
+		if len(placeholders) > 0 {
+			where = append(where, "brand IN ("+strings.Join(placeholders, ",")+")")
+		}
 	}
 	if v := strings.TrimSpace(c.Query("q")); v != "" {
 		where = append(where, "(name LIKE ? OR brand LIKE ?)")
 		like := "%" + v + "%"
 		args = append(args, like, like)
 	}
-	// 专属字段精确匹配：f_<key>=value
-	for key, vals := range c.Request.URL.Query() {
-		if !strings.HasPrefix(key, "f_") || len(vals) == 0 || vals[0] == "" {
+	// 同一专属字段的多个值按 OR 匹配，不同字段之间按 AND 匹配。
+	for key, values := range c.Request.URL.Query() {
+		if !strings.HasPrefix(key, "f_") {
 			continue
 		}
 		fk := strings.TrimPrefix(key, "f_")
 		if !fieldKeyRe.MatchString(fk) {
 			continue
 		}
-		where = append(where, fmt.Sprintf("json_extract(fields, '$.%s') = ?", fk))
-		args = append(args, vals[0])
+		placeholders := make([]string, 0, len(values))
+		for _, v := range values {
+			if v != "" {
+				placeholders = append(placeholders, "?")
+				args = append(args, v)
+			}
+		}
+		if len(placeholders) > 0 {
+			where = append(where, fmt.Sprintf("json_extract(fields, '$.%s') IN (%s)", fk, strings.Join(placeholders, ",")))
+		}
 	}
 
 	// 排序：默认按购入时间倒序（无购入时间按创建时间），支持品牌/价格

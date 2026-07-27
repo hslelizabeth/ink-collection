@@ -17,12 +17,12 @@ const pageSize = 24
 const loading = ref(true)
 const error = ref('')
 
-// 筛选条件
-const status = ref('')       // '' | collecting | parted
-const brand = ref('')
-const fieldFilters = ref({}) // { [fieldKey]: value }
+// 同一筛选组内多选，不同筛选组之间叠加生效；空数组表示全部。
+const statuses = ref([])
+const brandsSelected = ref([])
+const fieldFilters = ref({}) // { [fieldKey]: string[] }
 const q = ref('')
-const sort = ref('purchase_date') // purchase_date | brand | price_desc | price_asc
+const sort = ref('purchase_date') // purchase_date | price_desc | price_asc
 const filterOptions = ref({ brands: [], fields: {} })
 
 const totalPages = computed(() => Math.max(Math.ceil(total.value / pageSize), 1))
@@ -33,9 +33,13 @@ watch(q, () => {
   qTimer = setTimeout(() => { page.value = 1; loadItems() }, 350)
 })
 
-function setStatus(v) { status.value = v; page.value = 1; loadItems() }
-function setBrand(v) { brand.value = v; page.value = 1; loadItems() }
-function setField(k, v) { fieldFilters.value[k] = v; page.value = 1; loadItems() }
+function toggle(values, value) {
+  if (!value) return []
+  return values.includes(value) ? values.filter(v => v !== value) : [...values, value]
+}
+function setStatus(v) { statuses.value = toggle(statuses.value, v); page.value = 1; loadItems() }
+function setBrand(v) { brandsSelected.value = toggle(brandsSelected.value, v); page.value = 1; loadItems() }
+function setField(k, v) { fieldFilters.value[k] = toggle(fieldFilters.value[k] || [], v); page.value = 1; loadItems() }
 function setSort(v) { sort.value = v; page.value = 1; loadItems() }
 function goPage(p) {
   if (p < 1 || p > totalPages.value) return
@@ -48,11 +52,11 @@ async function loadItems() {
   loading.value = true
   error.value = ''
   const params = { category_id: cat.value.id, page: page.value, page_size: pageSize, sort: sort.value }
-  if (status.value) params.status = status.value
-  if (brand.value) params.brand = brand.value
+  if (statuses.value.length) params.status = statuses.value
+  if (brandsSelected.value.length) params.brand = brandsSelected.value
   if (q.value.trim()) params.q = q.value.trim()
-  for (const [k, v] of Object.entries(fieldFilters.value)) {
-    if (v) params[`f_${k}`] = v
+  for (const [k, values] of Object.entries(fieldFilters.value)) {
+    if (values.length) params[`f_${k}`] = values
   }
   try {
     const data = await api.listItems(params)
@@ -110,32 +114,31 @@ const brands = computed(() => (filterOptions.value.brands || []).filter(b => b))
       <div class="search-row"><input class="search" v-model="q" placeholder="搜索名称…"></div>
       <div class="filter-group">
         <span class="fname">状态</span>
-        <span class="chip" :class="{ active: status === '' }" @click="setStatus('')">全部</span>
-        <span class="chip" :class="{ active: status === 'collecting' }" @click="setStatus('collecting')">收藏</span>
-        <span class="chip" :class="{ active: status === 'parted' }" @click="setStatus('parted')">已结缘</span>
+        <span class="chip" :class="{ active: !statuses.length }" @click="setStatus('')">全部</span>
+        <span class="chip" :class="{ active: statuses.includes('collecting') }" @click="setStatus('collecting')">收藏</span>
+        <span class="chip" :class="{ active: statuses.includes('parted') }" @click="setStatus('parted')">已结缘</span>
       </div>
       <div v-for="g in fieldGroups" :key="g.key" class="filter-group">
         <span class="fname">{{ g.label }}</span>
-        <span class="chip" :class="{ active: !fieldFilters[g.key] }" @click="setField(g.key, '')">全部</span>
+        <span class="chip" :class="{ active: !fieldFilters[g.key]?.length }" @click="setField(g.key, '')">全部</span>
         <span
           v-for="v in g.values" :key="v"
-          class="chip" :class="{ active: fieldFilters[g.key] === v }"
+          class="chip" :class="{ active: fieldFilters[g.key]?.includes(v) }"
           @click="setField(g.key, v)"
         >{{ v }}</span>
       </div>
       <div v-if="brands.length" class="filter-group">
         <span class="fname">品牌</span>
-        <span class="chip" :class="{ active: brand === '' }" @click="setBrand('')">全部</span>
+        <span class="chip" :class="{ active: !brandsSelected.length }" @click="setBrand('')">全部</span>
         <span
           v-for="b in brands" :key="b"
-          class="chip" :class="{ active: brand === b }"
+          class="chip" :class="{ active: brandsSelected.includes(b) }"
           @click="setBrand(b)"
         >{{ b }}</span>
       </div>
       <div class="filter-group sort-group">
         <span class="fname">排序</span>
         <span class="chip" :class="{ active: sort === 'purchase_date' }" @click="setSort('purchase_date')">最新购入</span>
-        <span class="chip" :class="{ active: sort === 'brand' }" @click="setSort('brand')">品牌</span>
         <span class="chip" :class="{ active: sort === 'price_desc' }" @click="setSort('price_desc')">价格高→低</span>
         <span class="chip" :class="{ active: sort === 'price_asc' }" @click="setSort('price_asc')">价格低→高</span>
       </div>

@@ -39,7 +39,11 @@ export const api = {
   listItems: (params = {}) => {
     const qs = new URLSearchParams()
     for (const [k, v] of Object.entries(params)) {
-      if (v !== undefined && v !== null && v !== '') qs.set(k, v)
+      if (Array.isArray(v)) {
+        for (const item of v) qs.append(k, item)
+      } else if (v !== undefined && v !== null && v !== '') {
+        qs.set(k, v)
+      }
     }
     const s = qs.toString()
     return request(`/api/items${s ? '?' + s : ''}`)

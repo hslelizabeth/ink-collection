@@ -135,4 +135,4 @@ server {
 
 ## API 概览
 
-`/api/categories`、`/api/items`（支持 `category_id` `status` `q` `page` `f_<字段key>` 过滤）、`/api/items/:id/images`、`/api/filters`、`/api/stats`、`/api/backup`。状态值：`collecting`（收藏）/ `parted`（已结缘）。
+`/api/categories`、`/api/items`（支持 `category_id` `status` `brand` `q` `page` `f_<字段key>` 过滤）、`/api/items/:id/images`、`/api/filters`、`/api/stats`、`/api/backup`。状态值：`collecting`（收藏）/ `parted`（已结缘）。
