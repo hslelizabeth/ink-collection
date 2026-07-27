@@ -15,6 +15,7 @@
 - 首页统计：当前收藏件数、收藏总值、分品类数量与金额占比
 - 列表筛选：状态 / 品牌 / 各专属字段 + 名称搜索
 - 数据备份：管理页一键下载数据库文件
+- 管理访问控制：密码验证、30 分钟滑动会话、写接口后端强制鉴权
 
 ## 目录结构
 
@@ -35,7 +36,9 @@ cd server && go run .
 cd web && npm install && npm run dev
 ```
 
-环境变量：`PORT`（默认 8080）、`DATA_DIR`（默认 ./data）、`WEB_DIR`（设置后从磁盘目录提供前端，不读 embed）。
+环境变量：`PORT`（默认 8080）、`DATA_DIR`（默认 ./data）、`WEB_DIR`（设置后从磁盘目录提供前端，不读 embed）、`ADMIN_INITIAL_PASSWORD`（仅数据库尚未初始化管理密码时读取，至少 12 个字符）。
+
+首次本地启动需设置初始管理密码，例如：`ADMIN_INITIAL_PASSWORD='你的初始密码' DATA_DIR=./data go run .`。
 
 本地构建完整二进制：
 
@@ -43,7 +46,7 @@ cd web && npm install && npm run dev
 cd web && npm run build && cd ..
 rm -rf server/web/dist && cp -R web/dist server/web/dist
 cd server && CGO_ENABLED=0 go build -o inkcollection .
-DATA_DIR=./data ./inkcollection
+ADMIN_INITIAL_PASSWORD='你的初始密码' DATA_DIR=./data ./inkcollection
 ```
 
 ## Docker 部署（NAS）
@@ -65,6 +68,7 @@ docker run -d --name ink-collection \
   -p 8080:8080 \
   -v /volume1/docker/ink-collection/data:/data \
   -e TZ=Asia/Shanghai \
+  -e ADMIN_INITIAL_PASSWORD='你的初始密码' \
   --restart unless-stopped \
   ghcr.io/<你的用户名>/<仓库名>:latest
 ```
@@ -82,11 +86,21 @@ docker run -d --name ink-collection \
   -p 8080:8080 \
   -v /volume1/docker/ink-collection/data:/data \
   -e TZ=Asia/Shanghai \
+  -e ADMIN_INITIAL_PASSWORD='你的初始密码' \
   --restart unless-stopped \
   ink-collection:latest
 ```
 
-或 `docker compose up -d`（compose 默认把数据放在项目目录下的 `./data`）。
+已有管理密码的 data 目录也可继续使用 `docker compose up -d`；首次初始化请使用上面的 `docker run -e ADMIN_INITIAL_PASSWORD=...`，无需把密码写入 `docker-compose.yml` 或 `.env`。
+
+### 管理密码初始化与会话
+
+- `ADMIN_INITIAL_PASSWORD` 只在数据库尚无管理密码时读取，至少需要 12 个字符；数据库只保存 bcrypt 哈希，不保存明文。
+- 初始化成功后可以在以后重建容器时移除 `-e ADMIN_INITIAL_PASSWORD=...`。再次传入或修改该变量都不会覆盖现有密码。
+- 访问管理页、新增页或编辑页时需要验证密码；登录会话在最后一次管理操作后保持 30 分钟。
+- 管理页的「访问安全」可以修改密码或退出；修改密码会立即注销所有已登录设备。
+- 从旧版本升级时，首次启动新版本也需传入该变量，以便为原数据库初始化管理密码。
+- 如果忘记密码：先停止容器并备份 `collection.db`，使用 SQLite 删除设置项 `DELETE FROM settings WHERE key='admin_password_hash';`，再通过带新 `ADMIN_INITIAL_PASSWORD` 的 `docker run` 启动。不要在容器运行时直接修改数据库。
 
 ### 方式三：在别的机器上构建后导入
 
@@ -125,7 +139,7 @@ server {
 }
 ```
 
-> 注意：应用本身无登录认证。公网暴露前，建议在反代层加 Basic Auth 或访问控制。
+> 管理写操作已有密码认证，但普通藏品浏览仍是公开的。公网部署必须使用 HTTPS；如需限制整个站点访问，可在反向代理层继续增加 Basic Auth 或 IP 白名单。
 
 ## 数据与备份
 
@@ -135,4 +149,4 @@ server {
 
 ## API 概览
 
-`/api/categories`、`/api/items`（支持 `category_id` `status` `brand` `q` `page` `f_<字段key>` 过滤）、`/api/items/:id/images`、`/api/filters`、`/api/stats`、`/api/backup`。状态值：`collecting`（收藏）/ `parted`（已结缘）。
+公开读取接口包括 `/api/categories`、`/api/items`（支持 `category_id` `status` `brand` `q` `page` `f_<字段key>` 过滤）、`/api/items/:id`、`/api/filters`、`/api/stats`。品类/藏品写操作、图片写操作和 `/api/backup` 必须具有有效管理会话；认证接口位于 `/api/auth/*`。状态值：`collecting`（收藏）/ `parted`（已结缘）。

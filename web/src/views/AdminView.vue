@@ -1,14 +1,20 @@
 <script setup>
 // 管理页：藏品管理入口 / 品类配置 / 数据备份
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { api } from '../api.js'
+import { logoutAdmin, invalidateAdminAuth } from '../auth.js'
 import { store, loadCategories, catByKey, showToast } from '../store.js'
 import CatIcon from '../components/CatIcon.vue'
 import StateBlock from '../components/StateBlock.vue'
 
-const tab = ref('cats') // items | cats | backup
+const router = useRouter()
+const tab = ref('cats') // items | cats | backup | security
 const loading = ref(true)
 const error = ref('')
+const downloading = ref(false)
+const changingPassword = ref(false)
+const passwordForm = ref({ current: '', next: '', confirm: '' })
 
 async function load() {
   loading.value = true
@@ -22,6 +28,47 @@ async function load() {
   }
 }
 onMounted(load)
+
+async function downloadBackup() {
+  downloading.value = true
+  try {
+    await api.downloadBackup()
+    showToast('数据库备份已开始下载')
+  } catch (e) {
+    showToast(e.message || '备份下载失败')
+  } finally {
+    downloading.value = false
+  }
+}
+
+async function changePassword() {
+  const form = passwordForm.value
+  if (!form.current) { showToast('请输入当前密码'); return }
+  if (Array.from(form.next).length < 12) { showToast('新密码至少需要 12 个字符'); return }
+  if (form.next !== form.confirm) { showToast('两次输入的新密码不一致'); return }
+  changingPassword.value = true
+  try {
+    await api.changePassword({
+      current_password: form.current,
+      new_password: form.next,
+      confirm_password: form.confirm
+    })
+    passwordForm.value = { current: '', next: '', confirm: '' }
+    invalidateAdminAuth()
+    showToast('密码已修改，请使用新密码重新验证')
+    router.replace({ name: 'admin-login', query: { redirect: '/admin' } })
+  } catch (e) {
+    showToast(e.message || '修改密码失败')
+  } finally {
+    changingPassword.value = false
+  }
+}
+
+async function logout() {
+  await logoutAdmin()
+  showToast('已退出管理')
+  router.replace({ name: 'admin-login', query: { redirect: '/admin' } })
+}
 
 // ---- 品类编辑弹层 ----
 const ICONS = [
@@ -142,6 +189,7 @@ function relText(c) {
       <a :class="{ active: tab === 'items' }" @click="tab = 'items'">藏品管理</a>
       <a :class="{ active: tab === 'cats' }" @click="tab = 'cats'">品类配置</a>
       <a :class="{ active: tab === 'backup' }" @click="tab = 'backup'">数据备份</a>
+      <a :class="{ active: tab === 'security' }" @click="tab = 'security'">访问安全</a>
     </aside>
 
     <StateBlock :loading="loading" :error="error" @retry="load">
@@ -205,14 +253,47 @@ function relText(c) {
       </div>
 
       <!-- 数据备份 -->
-      <div v-else>
+      <div v-else-if="tab === 'backup'">
         <div class="panel">
           <h3>数据备份</h3>
           <p style="font-size:13px;color:var(--ink-soft);line-height:2;margin-bottom:16px">
             点击下方按钮下载完整数据库文件（含全部品类、藏品与关联配置）。<br>
             藏品图片保存在服务器的 uploads 目录中，请另行定期备份该目录。
           </p>
-          <a class="btn" href="/api/backup" download>下载数据库备份</a>
+          <button class="btn" :disabled="downloading" @click="downloadBackup">
+            {{ downloading ? '正在生成…' : '下载数据库备份' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- 访问安全 -->
+      <div v-else>
+        <div class="panel security-panel">
+          <h3>访问安全</h3>
+          <p class="security-hint">
+            当前管理权限有效。管理会话在最后一次管理操作后保持 30 分钟；修改密码会让所有已登录设备立即退出。
+          </p>
+          <div class="form-grid security-form">
+            <div class="form-item full">
+              <label>当前密码</label>
+              <input v-model="passwordForm.current" type="password" autocomplete="current-password">
+            </div>
+            <div class="form-item">
+              <label>新密码（至少 12 个字符）</label>
+              <input v-model="passwordForm.next" type="password" autocomplete="new-password">
+            </div>
+            <div class="form-item">
+              <label>确认新密码</label>
+              <input v-model="passwordForm.confirm" type="password" autocomplete="new-password">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn" :disabled="changingPassword" @click="changePassword">
+              {{ changingPassword ? '修改中…' : '修改访问密码' }}
+            </button>
+            <span class="spacer"></span>
+            <button class="btn danger" @click="logout">退出管理</button>
+          </div>
         </div>
       </div>
     </StateBlock>

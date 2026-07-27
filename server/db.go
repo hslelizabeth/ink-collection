@@ -67,6 +67,10 @@ func (d *DB) Migrate() error {
 			related_item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
 			UNIQUE(item_id, related_item_id)
 		)`,
+		`CREATE TABLE IF NOT EXISTS settings (
+			key TEXT PRIMARY KEY,
+			value TEXT NOT NULL
+		)`,
 		`CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_items_status ON items(status)`,
 		`CREATE INDEX IF NOT EXISTS idx_images_item ON images(item_id)`,

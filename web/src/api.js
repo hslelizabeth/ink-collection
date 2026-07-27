@@ -1,5 +1,5 @@
 // 后端 API 封装（契约见项目说明）
-async function request(path, options = {}) {
+async function request(path, options = {}, notifyAuth = true) {
   let res
   try {
     res = await fetch(path, options)
@@ -12,6 +12,9 @@ async function request(path, options = {}) {
       const data = await res.json()
       if (data && data.error) msg = data.error
     } catch { /* 非 JSON 响应 */ }
+    if (res.status === 401 && notifyAuth) {
+      window.dispatchEvent(new CustomEvent('admin-auth-required'))
+    }
     const err = new Error(msg)
     err.status = res.status
     throw err
@@ -29,6 +32,35 @@ function jsonOptions(method, body) {
 }
 
 export const api = {
+  // 管理认证
+  authStatus: () => request('/api/auth/status'),
+  login: (data) => request('/api/auth/login', jsonOptions('POST', data), false),
+  logout: () => request('/api/auth/logout', { method: 'POST' }, false),
+  changePassword: (data) => request('/api/auth/password', jsonOptions('POST', data)),
+  downloadBackup: async () => {
+    const res = await fetch('/api/backup')
+    if (!res.ok) {
+      let msg = `请求失败（${res.status}）`
+      try {
+        const data = await res.json()
+        if (data?.error) msg = data.error
+      } catch { /* 非 JSON 响应 */ }
+      if (res.status === 401) window.dispatchEvent(new CustomEvent('admin-auth-required'))
+      const err = new Error(msg)
+      err.status = res.status
+      throw err
+    }
+    const blob = await res.blob()
+    const disposition = res.headers.get('Content-Disposition') || ''
+    const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] || 'collection-backup.db'
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.click()
+    URL.revokeObjectURL(url)
+  },
+
   // 品类
   listCategories: () => request('/api/categories'),
   createCategory: (data) => request('/api/categories', jsonOptions('POST', data)),
