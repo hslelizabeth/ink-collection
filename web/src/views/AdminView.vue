@@ -76,6 +76,23 @@ const ICONS = [
   { key: 'ink', label: '墨水' },
   { key: 'inkstone', label: '砚台' },
   { key: 'inkstick', label: '墨条' },
+  { key: 'brush', label: '毛笔' },
+  { key: 'paper', label: '宣纸' },
+  { key: 'notebook', label: '本子' },
+  { key: 'seal', label: '印章' },
+  { key: 'inkpad', label: '印泥' },
+  { key: 'paperweight', label: '镇纸' },
+  { key: 'scroll', label: '卷轴' },
+  { key: 'penholder', label: '笔筒' },
+  { key: 'palette', label: '颜料' },
+  { key: 'pencil', label: '铅笔' },
+  { key: 'ruler', label: '尺子' },
+  { key: 'scissors', label: '剪刀' },
+  { key: 'bookmark', label: '书签' },
+  { key: 'letter', label: '信封' },
+  { key: 'eraser', label: '橡皮' },
+  { key: 'tape', label: '胶带' },
+  { key: 'glue', label: '胶棒' },
   { key: 'generic', label: '通用' }
 ]
 
