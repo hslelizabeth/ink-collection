@@ -98,6 +98,37 @@ const ICONS = [
 
 const editing = ref(null) // 编辑中的品类草稿，null 表示关闭弹层
 const savingCat = ref(false)
+const reordering = ref(false)
+
+// 品类自定义排序：与相邻品类交换位置，顺序同步到导航与首页统计
+async function moveCategory(c, dir) {
+  const list = store.categories
+  const i = list.findIndex(x => x.id === c.id)
+  const j = i + dir
+  if (i < 0 || j < 0 || j >= list.length) return
+  reordering.value = true
+  try {
+    const newOrder = [...list]
+    ;[newOrder[i], newOrder[j]] = [newOrder[j], newOrder[i]]
+    const bodyOf = (cat, sort) => ({
+      key: cat.key, name: cat.name, icon: cat.icon, color: cat.color,
+      sort, fields: cat.fields || [], relations: cat.relations || []
+    })
+    // 统一按新位置重排序号（历史数据可能使用 1,2,3… 旧刻度），只提交有变化的品类
+    const updates = newOrder
+      .map((cat, p) => ({ cat, sort: (p + 1) * 10 }))
+      .filter(u => u.cat.sort !== u.sort)
+    for (const u of updates) {
+      await api.updateCategory(u.cat.id, bodyOf(u.cat, u.sort))
+    }
+    await loadCategories(true)
+    showToast('顺序已更新')
+  } catch (e) {
+    showToast(e.message || '调整顺序失败')
+  } finally {
+    reordering.value = false
+  }
+}
 
 function blankCategory() {
   return {
@@ -231,7 +262,7 @@ function relText(c) {
           <h3>品类配置 <button class="btn" style="margin-left:auto" @click="openNew">+ 新增品类</button></h3>
           <table class="config-table">
             <tr><th>品类</th><th>通用字段</th><th>专属字段</th><th>关联</th><th>操作</th></tr>
-            <tr v-for="c in store.categories" :key="c.id">
+            <tr v-for="(c, i) in store.categories" :key="c.id">
               <td>{{ c.name }}</td>
               <td>名称/品牌/状态/图片/购入结缘信息</td>
               <td>
@@ -240,18 +271,22 @@ function relText(c) {
               </td>
               <td>{{ relText(c) }}</td>
               <td style="white-space:nowrap">
-                <button class="btn ghost" @click="openEdit(c)">编辑</button>
+                <button class="btn ghost" :disabled="reordering || i === 0" title="上移" @click="moveCategory(c, -1)">↑</button>
+                <button class="btn ghost" style="margin-left:6px" :disabled="reordering || i === store.categories.length - 1" title="下移" @click="moveCategory(c, 1)">↓</button>
+                <button class="btn ghost" style="margin-left:6px" @click="openEdit(c)">编辑</button>
                 <button class="btn danger" style="margin-left:6px" @click="removeCategory(c)">删除</button>
               </td>
             </tr>
           </table>
           <!-- 移动端品类卡片 -->
           <div class="cat-cards">
-            <div v-for="c in store.categories" :key="c.id" class="cat-card">
+            <div v-for="(c, i) in store.categories" :key="c.id" class="cat-card">
               <div class="cc-head">
                 <b>{{ c.name }}</b>
                 <span>
-                  <button class="btn ghost" @click="openEdit(c)">编辑</button>
+                  <button class="btn ghost" :disabled="reordering || i === 0" title="上移" @click="moveCategory(c, -1)">↑</button>
+                  <button class="btn ghost" style="margin-left:6px" :disabled="reordering || i === store.categories.length - 1" title="下移" @click="moveCategory(c, 1)">↓</button>
+                  <button class="btn ghost" style="margin-left:6px" @click="openEdit(c)">编辑</button>
                   <button class="btn danger" style="margin-left:6px" @click="removeCategory(c)">删除</button>
                 </span>
               </div>
