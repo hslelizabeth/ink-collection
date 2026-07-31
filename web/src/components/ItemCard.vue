@@ -35,7 +35,7 @@ const priceText = computed(() => {
 
 <template>
   <router-link class="item-card" :to="`/item/${item.id}`">
-    <div class="item-img" :style="item.cover_thumb_url ? {} : { background: color }">
+    <div class="item-img" :class="{ parted: item.status === 'parted' }" :style="item.cover_thumb_url ? {} : { background: color }">
       <img v-if="item.cover_thumb_url" :src="item.cover_thumb_url" :alt="item.name" loading="lazy">
       <CatIcon v-else :name="icon" />
       <span v-if="item.status === 'parted'" class="stamp sold">{{ statusLabel(item.status) }}</span>

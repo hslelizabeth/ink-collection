@@ -51,7 +51,7 @@ async function loadItems() {
   if (!cat.value) return
   loading.value = true
   error.value = ''
-  const params = { category_id: cat.value.id, page: page.value, page_size: pageSize, sort: sort.value }
+  const params = { category_id: cat.value.id, page: page.value, page_size: pageSize, sort: sort.value, status_first: '1' }
   if (statuses.value.length) params.status = statuses.value
   if (brandsSelected.value.length) params.brand = brandsSelected.value
   if (q.value.trim()) params.q = q.value.trim()

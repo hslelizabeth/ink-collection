@@ -179,6 +179,10 @@ func (s *Server) listItems(c *gin.Context) {
 	default: // purchase_date
 		orderBy = "COALESCE(purchase_date, created_at) DESC, id DESC"
 	}
+	// status_first=1：收藏在前、已结缘在后，组内再按上述排序
+	if c.Query("status_first") == "1" {
+		orderBy = "CASE WHEN status = 'collecting' THEN 0 ELSE 1 END ASC, " + orderBy
+	}
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if page < 1 {
