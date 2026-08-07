@@ -282,6 +282,12 @@ th { color: var(--ink-soft); font-weight: 600; letter-spacing: .1em; font-size: 
   background: transparent; color: var(--cinnabar); border: 1px solid var(--cinnabar); border-radius: 3px;
 }
 .editor-hint { font-size: 12px; color: var(--ink-soft); margin: 4px 0 10px; letter-spacing: .05em; }
+.field-filterable {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 12px;
+  color: var(--ink-soft); white-space: nowrap; cursor: pointer;
+}
+.field-filterable input { accent-color: var(--cinnabar); }
+.fname-empty { font-size: 12px; color: var(--ink-soft); opacity: .75; }
 
 /* ---- 关联选择器 / 图片管理 ---- */
 .rel-picker { position: relative; }

@@ -87,13 +87,13 @@ onMounted(async () => {
   loadItems()
 })
 
-// 有可选值的专属字段才渲染筛选组
+// 配置为可筛选的专属字段才渲染筛选组；无可选值时只显示「全部」
 const fieldGroups = computed(() => {
   const fields = cat.value?.fields || []
   const opts = filterOptions.value.fields || {}
   return fields
     .map(f => ({ ...f, values: (opts[f.key] || []).filter(v => v !== '') }))
-    .filter(f => f.values.length)
+    .filter(f => f.filterable !== false)
 })
 
 const brands = computed(() => (filterOptions.value.brands || []).filter(b => b))
@@ -121,6 +121,7 @@ const brands = computed(() => (filterOptions.value.brands || []).filter(b => b))
       <div v-for="g in fieldGroups" :key="g.key" class="filter-group">
         <span class="fname">{{ g.label }}</span>
         <span class="chip" :class="{ active: !fieldFilters[g.key]?.length }" @click="setField(g.key, '')">全部</span>
+        <span v-if="!g.values.length" class="fname-empty">暂无可选值</span>
         <span
           v-for="v in g.values" :key="v"
           class="chip" :class="{ active: fieldFilters[g.key]?.includes(v) }"

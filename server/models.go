@@ -7,6 +7,8 @@ type FieldDef struct {
 	Label   string   `json:"label"`
 	Type    string   `json:"type"` // text | select
 	Options []string `json:"options,omitempty"`
+	// Filterable 表示该字段是否在品类列表页作为筛选项；nil 视为可筛选（兼容旧数据）
+	Filterable *bool `json:"filterable,omitempty"`
 }
 
 type RelationDef struct {

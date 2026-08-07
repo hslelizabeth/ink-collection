@@ -145,13 +145,13 @@ function openEdit(c) {
   editing.value = {
     id: c.id, key: c.key, name: c.name, icon: c.icon || 'generic',
     color: c.color || '#3a4a5a', sort: c.sort ?? 0,
-    fields: (c.fields || []).map(f => ({ ...f, optionsText: (f.options || []).join('，') })),
+    fields: (c.fields || []).map(f => ({ ...f, filterable: f.filterable !== false, optionsText: (f.options || []).join('，') })),
     relations: (c.relations || []).map(r => ({ ...r }))
   }
 }
 
 function addField() {
-  editing.value.fields.push({ label: '', key: '', type: 'text', optionsText: '' })
+  editing.value.fields.push({ label: '', key: '', type: 'text', optionsText: '', filterable: true })
 }
 function removeField(i) {
   editing.value.fields.splice(i, 1)
@@ -190,6 +190,7 @@ async function saveCategory() {
       key: f.key.trim(),
       label: f.label.trim(),
       type: f.type,
+      filterable: f.filterable !== false,
       ...(f.type === 'select'
         ? { options: f.optionsText.split(/[,，]/).map(s => s.trim()).filter(Boolean) }
         : {})
@@ -392,6 +393,9 @@ function relText(c) {
             <option value="select">下拉</option>
           </select>
           <input v-if="f.type === 'select'" v-model="f.optionsText" placeholder="选项，逗号分隔" style="flex:1;min-width:120px">
+          <label class="field-filterable" title="在品类列表页作为筛选项显示">
+            <input type="checkbox" v-model="f.filterable">筛选项
+          </label>
           <button class="mini-btn" @click="removeField(i)">删除</button>
         </div>
         <button class="mini-btn" @click="addField">+ 添加字段</button>
