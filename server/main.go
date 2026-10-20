@@ -97,6 +97,7 @@ func main() {
 			admin.PUT("/items/:id/cover", s.setCover)
 			admin.DELETE("/images/:id", s.deleteImage)
 			admin.GET("/backup", s.backup)
+			admin.GET("/spending", s.spendingStats)
 		}
 	}
 

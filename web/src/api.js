@@ -97,5 +97,6 @@ export const api = {
 
   // 筛选 / 统计
   getFilters: (categoryId) => request(`/api/filters?category_id=${categoryId}`),
-  getStats: () => request('/api/stats')
+  getStats: () => request('/api/stats'),
+  getSpending: () => request('/api/spending')
 }

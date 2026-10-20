@@ -129,6 +129,102 @@ func (s *Server) getStats(c *gin.Context) {
 	})
 }
 
+// spendingStats 按品类汇总花费与结缘情况（仅管理端可见）。
+func (s *Server) spendingStats(c *gin.Context) {
+	rows, err := s.db.Query(`SELECT ` + categoryCols + ` FROM categories ORDER BY sort, id`)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	catList := []*Category{}
+	for rows.Next() {
+		cat, err := scanCategory(rows)
+		if err != nil {
+			rows.Close()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		catList = append(catList, cat)
+	}
+	rows.Close()
+
+	type agg struct {
+		totalCount    int
+		spentTotal    float64 // 全部购入价合计
+		collectingCnt int
+		spentKeeping  float64 // 仍在收藏的购入价合计
+		partedCnt     int
+		spentParted   float64 // 已结缘藏品的原购入价合计
+		partedAmount  float64 // 结缘收入合计
+	}
+	aggs := map[int64]*agg{}
+	aggRows, err := s.db.Query(`
+		SELECT category_id,
+			COUNT(*),
+			COALESCE(SUM(purchase_price), 0),
+			COALESCE(SUM(CASE WHEN status = 'collecting' THEN 1 ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN status = 'collecting' THEN purchase_price ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN status = 'parted' THEN 1 ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN status = 'parted' THEN purchase_price ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN status = 'parted' THEN COALESCE(parted_price, 0) ELSE 0 END), 0)
+		FROM items GROUP BY category_id`)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	for aggRows.Next() {
+		var catID int64
+		a := &agg{}
+		if err := aggRows.Scan(&catID, &a.totalCount, &a.spentTotal, &a.collectingCnt,
+			&a.spentKeeping, &a.partedCnt, &a.spentParted, &a.partedAmount); err == nil {
+			aggs[catID] = a
+		}
+	}
+	aggRows.Close()
+
+	var summary agg
+	list := []gin.H{}
+	for _, cat := range catList {
+		a := aggs[cat.ID]
+		if a == nil {
+			a = &agg{}
+		}
+		summary.totalCount += a.totalCount
+		summary.spentTotal += a.spentTotal
+		summary.collectingCnt += a.collectingCnt
+		summary.spentKeeping += a.spentKeeping
+		summary.partedCnt += a.partedCnt
+		summary.spentParted += a.spentParted
+		summary.partedAmount += a.partedAmount
+		list = append(list, gin.H{
+			"id": cat.ID, "key": cat.Key, "name": cat.Name,
+			"icon": cat.Icon, "color": cat.Color,
+			"total_count":      a.totalCount,
+			"spent_total":      a.spentTotal,
+			"collecting_count": a.collectingCnt,
+			"spent_collecting": a.spentKeeping,
+			"parted_count":     a.partedCnt,
+			"spent_parted":     a.spentParted,
+			"parted_amount":    a.partedAmount,
+			"parted_net":       a.partedAmount - a.spentParted,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"categories": list,
+		"summary": gin.H{
+			"total_count":      summary.totalCount,
+			"spent_total":      summary.spentTotal,
+			"collecting_count": summary.collectingCnt,
+			"spent_collecting": summary.spentKeeping,
+			"parted_count":     summary.partedCnt,
+			"spent_parted":     summary.spentParted,
+			"parted_amount":    summary.partedAmount,
+			"parted_net":       summary.partedAmount - summary.spentParted,
+		},
+	})
+}
+
 func (s *Server) backup(c *gin.Context) {
 	tmp := filepath.Join(os.TempDir(), fmt.Sprintf("inkcollection-backup-%d.db", time.Now().UnixNano()))
 	if _, err := s.db.Exec(`VACUUM INTO ?`, tmp); err != nil {

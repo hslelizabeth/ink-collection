@@ -5,16 +5,44 @@ import { useRouter } from 'vue-router'
 import { api } from '../api.js'
 import { logoutAdmin, invalidateAdminAuth } from '../auth.js'
 import { store, loadCategories, catByKey, showToast } from '../store.js'
+import { formatMoney } from '../utils.js'
 import CatIcon from '../components/CatIcon.vue'
 import StateBlock from '../components/StateBlock.vue'
 
 const router = useRouter()
-const tab = ref('cats') // items | cats | backup | security
+const tab = ref('cats') // items | cats | spending | backup | security
 const loading = ref(true)
 const error = ref('')
 const downloading = ref(false)
 const changingPassword = ref(false)
 const passwordForm = ref({ current: '', next: '', confirm: '' })
+
+const spending = ref({ categories: [], summary: null })
+const spendingLoading = ref(false)
+const spendingError = ref('')
+
+async function loadSpending() {
+  spendingLoading.value = true
+  spendingError.value = ''
+  try {
+    spending.value = await api.getSpending()
+  } catch (e) {
+    spendingError.value = e.message || '统计加载失败'
+  } finally {
+    spendingLoading.value = false
+  }
+}
+
+function openTab(name) {
+  tab.value = name
+  if (name === 'spending') loadSpending()
+}
+
+// 盈亏金额：正数显示 +，负数显示 -（负数金额本身为负，取绝对值再加符号）
+function signedMoney(v) {
+  const n = Number(v) || 0
+  return (n > 0 ? '+' : n < 0 ? '-' : '') + formatMoney(Math.abs(n))
+}
 
 async function load() {
   loading.value = true
@@ -235,10 +263,11 @@ function relText(c) {
 <template>
   <div class="admin">
     <aside class="admin-side">
-      <a :class="{ active: tab === 'items' }" @click="tab = 'items'">藏品管理</a>
-      <a :class="{ active: tab === 'cats' }" @click="tab = 'cats'">品类配置</a>
-      <a :class="{ active: tab === 'backup' }" @click="tab = 'backup'">数据备份</a>
-      <a :class="{ active: tab === 'security' }" @click="tab = 'security'">访问安全</a>
+      <a :class="{ active: tab === 'items' }" @click="openTab('items')">藏品管理</a>
+      <a :class="{ active: tab === 'cats' }" @click="openTab('cats')">品类配置</a>
+      <a :class="{ active: tab === 'spending' }" @click="openTab('spending')">花费统计</a>
+      <a :class="{ active: tab === 'backup' }" @click="openTab('backup')">数据备份</a>
+      <a :class="{ active: tab === 'security' }" @click="openTab('security')">访问安全</a>
     </aside>
 
     <StateBlock :loading="loading" :error="error" @retry="load">
@@ -302,6 +331,84 @@ function relText(c) {
               <div class="cc-row"><span>关联</span>{{ relText(c) }}</div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- 花费统计 -->
+      <div v-else-if="tab === 'spending'">
+        <div class="panel">
+          <h3>花费统计</h3>
+          <StateBlock :loading="spendingLoading" :error="spendingError" @retry="loadSpending">
+            <div v-if="spending.summary" class="spend-summary">
+              <div class="spend-cell">
+                <span>总花费（含已结缘）</span>
+                <b>{{ formatMoney(spending.summary.spent_total) }}</b>
+              </div>
+              <div class="spend-cell">
+                <span>收藏中购入价</span>
+                <b>{{ formatMoney(spending.summary.spent_collecting) }}</b>
+              </div>
+              <div class="spend-cell">
+                <span>已结缘购入价</span>
+                <b>{{ formatMoney(spending.summary.spent_parted) }}</b>
+              </div>
+              <div class="spend-cell">
+                <span>已结缘出价</span>
+                <b>{{ formatMoney(spending.summary.parted_amount) }}</b>
+              </div>
+            </div>
+
+            <table class="config-table spend-table">
+              <tr>
+                <th>品类</th><th>件数</th><th>总花费（含已结缘）</th>
+                <th>收藏中购入价</th><th>已结缘购入价</th><th>已结缘出价</th><th>盈亏</th>
+              </tr>
+              <tr v-for="row in spending.categories" :key="row.id">
+                <td>{{ row.name }}</td>
+                <td>{{ row.total_count }}</td>
+                <td>{{ formatMoney(row.spent_total) }}</td>
+                <td>{{ formatMoney(row.spent_collecting) }}</td>
+                <td>{{ formatMoney(row.spent_parted) }}</td>
+                <td>{{ formatMoney(row.parted_amount) }}</td>
+                <td :class="row.parted_net >= 0 ? 'gain' : 'loss'">{{ signedMoney(row.parted_net) }}</td>
+              </tr>
+              <tr v-if="spending.summary" class="spend-total-row">
+                <td>合计</td>
+                <td>{{ spending.summary.total_count }}</td>
+                <td>{{ formatMoney(spending.summary.spent_total) }}</td>
+                <td>{{ formatMoney(spending.summary.spent_collecting) }}</td>
+                <td>{{ formatMoney(spending.summary.spent_parted) }}</td>
+                <td>{{ formatMoney(spending.summary.parted_amount) }}</td>
+                <td :class="spending.summary.parted_net >= 0 ? 'gain' : 'loss'">{{ signedMoney(spending.summary.parted_net) }}</td>
+              </tr>
+            </table>
+
+            <!-- 移动端卡片 -->
+            <div class="spend-cards">
+              <div v-for="row in spending.categories" :key="row.id" class="spend-card">
+                <div class="cc-head"><b>{{ row.name }}</b><span>{{ row.total_count }} 件</span></div>
+                <div class="cc-row"><span>总花费</span>{{ formatMoney(row.spent_total) }}</div>
+                <div class="cc-row"><span>收藏中</span>{{ formatMoney(row.spent_collecting) }}</div>
+                <div class="cc-row"><span>已结缘购入</span>{{ formatMoney(row.spent_parted) }}</div>
+                <div class="cc-row"><span>已结缘出价</span>{{ formatMoney(row.parted_amount) }}</div>
+                <div class="cc-row">
+                  <span>盈亏</span>
+                  <b :class="row.parted_net >= 0 ? 'gain' : 'loss'">{{ signedMoney(row.parted_net) }}</b>
+                </div>
+              </div>
+              <div v-if="spending.summary" class="spend-card">
+                <div class="cc-head"><b>合计</b><span>{{ spending.summary.total_count }} 件</span></div>
+                <div class="cc-row"><span>总花费</span>{{ formatMoney(spending.summary.spent_total) }}</div>
+                <div class="cc-row"><span>收藏中</span>{{ formatMoney(spending.summary.spent_collecting) }}</div>
+                <div class="cc-row"><span>已结缘购入</span>{{ formatMoney(spending.summary.spent_parted) }}</div>
+                <div class="cc-row"><span>已结缘出价</span>{{ formatMoney(spending.summary.parted_amount) }}</div>
+                <div class="cc-row">
+                  <span>盈亏</span>
+                  <b :class="spending.summary.parted_net >= 0 ? 'gain' : 'loss'">{{ signedMoney(spending.summary.parted_net) }}</b>
+                </div>
+              </div>
+            </div>
+          </StateBlock>
         </div>
       </div>
 
